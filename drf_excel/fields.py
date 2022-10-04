@@ -147,7 +147,7 @@ class XLSXListField(XLSXField):
     def prep_value(self) -> Any:
         if len(self.value) > 0 and isinstance(self.value[0], Iterable):
             # array of array; write as json
-            return json.dumps(self.value, ensure_ascii=False)
+            return json.dumps(self.value)
         else:
             # Flatten the array into a comma separated string to fit
             # in a single spreadsheet column
