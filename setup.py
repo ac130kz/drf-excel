@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 with open("README.md") as f:
     long_description = f.read()
@@ -14,7 +14,7 @@ setup(
     include_package_data=True,
     packages=find_packages(),
     zip_safe=False,
-    install_requires=["djangorestframework>=3.14", "openpyxl>=2.4"],
+    install_requires=["djangorestframework>=3.14", "openpyxl>=2.4", "orjson>=3.8"],
     setup_requires=["setuptools_scm"],
     use_scm_version=True,
     classifiers=[

@@ -1,7 +1,7 @@
-import json
 from collections.abc import Iterable, MutableMapping
 from typing import Dict
 
+import orjson as json
 from openpyxl import Workbook
 from openpyxl.drawing.image import Image
 from openpyxl.styles import PatternFill
@@ -22,13 +22,7 @@ from rest_framework.fields import (
 from rest_framework.renderers import BaseRenderer
 from rest_framework.serializers import Serializer
 
-from drf_excel.fields import (
-    XLSXBooleanField,
-    XLSXDateField,
-    XLSXField,
-    XLSXListField,
-    XLSXNumberField,
-)
+from drf_excel.fields import XLSXBooleanField, XLSXDateField, XLSXField, XLSXListField, XLSXNumberField
 from drf_excel.utilities import XLSXStyle, get_attribute, set_cell_style
 
 
@@ -76,15 +70,11 @@ class XLSXRenderer(BaseRenderer):
         if img_addr:
             img = Image(img_addr)
             self.ws.add_image(img, "A1")
-        header_style = (
-            XLSXStyle(header.get("style")) if header and "style" in header else None
-        )
+        header_style = XLSXStyle(header.get("style")) if header and "style" in header else None
 
         column_header = get_attribute(drf_view, "column_header", {})
         column_header_style = (
-            XLSXStyle(column_header.get("style"))
-            if column_header and "style" in column_header
-            else None
+            XLSXStyle(column_header.get("style")) if column_header and "style" in column_header else None
         )
         column_count = 0
         row_count = 1
@@ -117,9 +107,7 @@ class XLSXRenderer(BaseRenderer):
             # 	      'format': '0.00E+00'
             # 	  },
             # }
-            self.column_data_styles = get_attribute(
-                drf_view, "column_data_styles", dict()
-            )
+            self.column_data_styles = get_attribute(drf_view, "column_data_styles", dict())
 
             # Set dict of additional columns. Can be useful when wanting to add columns
             # that don't exist in the API response. For example, you could want to
@@ -141,17 +129,12 @@ class XLSXRenderer(BaseRenderer):
 
             self.fields_dict = self._serializer_fields(drf_view.get_serializer())
 
-            xlsx_header_dict = self._flatten_serializer_keys(
-                drf_view.get_serializer(), use_labels=use_labels
-            )
+            xlsx_header_dict = self._flatten_serializer_keys(drf_view.get_serializer(), use_labels=use_labels)
             if self.custom_cols:
                 custom_header_dict = {
-                    key: self.custom_cols[key].get("label", None) or key
-                    for key in self.custom_cols.keys()
+                    key: self.custom_cols[key].get("label", None) or key for key in self.custom_cols.keys()
                 }
-                self.combined_header_dict = dict(
-                    list(xlsx_header_dict.items()) + list(custom_header_dict.items())
-                )
+                self.combined_header_dict = dict(list(xlsx_header_dict.items()) + list(custom_header_dict.items()))
             else:
                 self.combined_header_dict = xlsx_header_dict
 
@@ -164,9 +147,7 @@ class XLSXRenderer(BaseRenderer):
                 else:
                     column_name_display = column_titles[column_count - 1]
 
-                header_cell = self.ws.cell(
-                    row=row_count, column=column_count, value=column_name_display
-                )
+                header_cell = self.ws.cell(row=row_count, column=column_count, value=column_name_display)
                 set_cell_style(header_cell, column_header_style)
             self.ws.row_dimensions[row_count].height = column_header.get("height", 45)
 
@@ -194,9 +175,7 @@ class XLSXRenderer(BaseRenderer):
 
         # Make body
         body = get_attribute(drf_view, "body", {})
-        self.body_style = (
-            XLSXStyle(body.get("style")) if body and "style" in body else None
-        )
+        self.body_style = XLSXStyle(body.get("style")) if body and "style" in body else None
         if isinstance(results, dict):
             self._make_body(body, results, row_count)
         elif isinstance(results, list):
@@ -315,15 +294,11 @@ class XLSXRenderer(BaseRenderer):
                 continue
             column_count += 1
             field = flattened_row.get(header_key)
-            field.cell(self.ws, row_count, column_count) if field else self.ws.cell(
-                row_count, column_count
-            )
+            field.cell(self.ws, row_count, column_count) if field else self.ws.cell(row_count, column_count)
         self.ws.row_dimensions[row_count].height = body.get("height", 40)
         if "row_color" in row:
             last_letter = get_column_letter(column_count)
-            cell_range = self.ws[
-                f"A{row_count}" : f"{last_letter}{row_count}"
-            ]
+            cell_range = self.ws[f"A{row_count}":f"{last_letter}{row_count}"]
             fill = PatternFill(fill_type="solid", start_color=row["row_color"])
             for r in cell_range:
                 for c in r:
@@ -331,39 +306,22 @@ class XLSXRenderer(BaseRenderer):
 
     def _drf_to_xlsx_field(self, key, value) -> XLSXField:
         field = self.fields_dict.get(key)
-        cell_style = (
-            XLSXStyle(self.column_data_styles.get(key))
-            if key in self.column_data_styles
-            else None
-        )
+        cell_style = XLSXStyle(self.column_data_styles.get(key)) if key in self.column_data_styles else None
         kwargs = {
             "key": key,
             "value": value,
             "field": field,
             "style": self.body_style,
             # Basically using formatter of custom col as a custom mapping
-            "mapping": self.custom_cols.get(key, {}).get("formatter")
-            or self.custom_mappings.get(key),
+            "mapping": self.custom_cols.get(key, {}).get("formatter") or self.custom_mappings.get(key),
             "cell_style": cell_style,
         }
         if isinstance(field, BooleanField):
             return XLSXBooleanField(boolean_display=self.boolean_display, **kwargs)
-        elif (
-            isinstance(field, IntegerField)
-            or isinstance(field, FloatField)
-            or isinstance(field, DecimalField)
-        ):
+        elif isinstance(field, IntegerField) or isinstance(field, FloatField) or isinstance(field, DecimalField):
             return XLSXNumberField(**kwargs)
-        elif (
-            isinstance(field, DateTimeField)
-            or isinstance(field, DateField)
-            or isinstance(field, TimeField)
-        ):
+        elif isinstance(field, DateTimeField) or isinstance(field, DateField) or isinstance(field, TimeField):
             return XLSXDateField(**kwargs)
-        elif (
-            isinstance(field, ListField)
-            or isinstance(value, Iterable)
-            and not isinstance(value, str)
-        ):
+        elif isinstance(field, ListField) or isinstance(value, Iterable) and not isinstance(value, str):
             return XLSXListField(list_sep=self.list_sep, **kwargs)
         return XLSXField(**kwargs)

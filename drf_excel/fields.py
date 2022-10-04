@@ -1,8 +1,8 @@
 import datetime
-import json
 from decimal import Decimal
 from typing import Any, Callable, Iterable, Union
 
+import orjson as json
 from django.utils.dateparse import parse_date, parse_datetime, parse_time
 from openpyxl.cell import Cell
 from openpyxl.styles.numbers import (
@@ -14,15 +14,7 @@ from openpyxl.styles.numbers import (
 )
 from openpyxl.worksheet.worksheet import Worksheet
 from rest_framework import ISO_8601
-from rest_framework.fields import (
-    DateField,
-    DateTimeField,
-    DecimalField,
-    Field,
-    FloatField,
-    IntegerField,
-    TimeField,
-)
+from rest_framework.fields import DateField, DateTimeField, DecimalField, Field, FloatField, IntegerField, TimeField
 from rest_framework.settings import api_settings as drf_settings
 
 from drf_excel.utilities import XLSXStyle, get_setting, sanitize_value, set_cell_style
@@ -128,19 +120,12 @@ class XLSXDateField(XLSXField):
     def init_value(self, value):
         # Set tzinfo to None on datetime and time types since timezones are not supported in Excel
         try:
-            if (
-                isinstance(self.drf_field, DateTimeField)
-                and type(value) != datetime.datetime
-            ):
-                return self._parse_date(
-                    value, "DATETIME_FORMAT", parse_datetime
-                ).replace(tzinfo=None)
+            if isinstance(self.drf_field, DateTimeField) and type(value) != datetime.datetime:
+                return self._parse_date(value, "DATETIME_FORMAT", parse_datetime).replace(tzinfo=None)
             elif isinstance(self.drf_field, DateField) and type(value) != datetime.date:
                 return self._parse_date(value, "DATE_FORMAT", parse_date)
             elif isinstance(self.drf_field, TimeField) and type(value) != datetime.time:
-                return self._parse_date(value, "TIME_FORMAT", parse_time).replace(
-                    tzinfo=None
-                )
+                return self._parse_date(value, "TIME_FORMAT", parse_time).replace(tzinfo=None)
         except:
             return value
 
