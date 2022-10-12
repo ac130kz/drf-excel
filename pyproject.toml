@@ -1,0 +1,75 @@
+[tool.poetry]
+name = "drf-excel"
+version = "2.2.1"
+description = "Django REST Framework renderer for Excel spreadsheet (xlsx) files."
+authors = ["Timothy Allen <tallen@wharton.upenn.edu>"]
+readme = "README.md"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3 :: Only",
+    "Framework :: Django",
+    "Framework :: Django :: 3",
+    "Framework :: Django :: 4",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+djangorestframework = ">=3.14"
+openpyxl = ">=2.4"
+orjson = ">=3.8"
+
+[tool.poetry.dev-dependencies]
+black = "^22.10.0"
+pylint = "^2.15.4"
+pylint-plugin-utils = "^0.7"
+isort = "^5.10.1"
+
+[build-system]
+requires = ["poetry-core>=1.2.1"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pyright]
+pythonVersion = "3.9"
+
+[tool.black]
+line-length = 120
+target-version = ["py39"]
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+
+[tool.pylint.main]
+load-plugins = [
+    "pylint.extensions.bad_builtin",
+    "pylint.extensions.check_elif",
+]
+jobs = 0
+disable = [
+    "missing-function-docstring", 
+    "missing-class-docstring",
+    "missing-module-docstring",
+    "line-too-long",
+    "bare-except",
+    "fixme",
+    "protected-access",
+    "invalid-name",
+    "too-few-public-methods",
+    "too-many-instance-attributes",
+    "too-many-locals",
+    "too-many-ancestors",
+    "no-member",
+    "wrong-import-position"
+]
+
+[tool.pylint.deprecated_builtins]
+bad-functions = ["map", "filter", "apply", "reduce"]

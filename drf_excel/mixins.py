@@ -21,13 +21,8 @@ class XLSXFileMixin(object):
         Return the response with the proper content disposition and the customized
         filename instead of the browser default (or lack thereof).
         """
-        response = super().finalize_response(
-            request, response, *args, **kwargs
-        )
-        if (
-            isinstance(response, Response)
-            and response.accepted_renderer.format == "xlsx"
-        ):
+        response = super().finalize_response(request, response, *args, **kwargs)
+        if isinstance(response, Response) and response.accepted_renderer.format == "xlsx":
             response["content-disposition"] = "attachment; filename={}".format(
                 escape_uri_path(self.get_filename(request=request, *args, **kwargs)),
             )

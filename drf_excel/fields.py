@@ -14,7 +14,15 @@ from openpyxl.styles.numbers import (
 )
 from openpyxl.worksheet.worksheet import Worksheet
 from rest_framework import ISO_8601
-from rest_framework.fields import DateField, DateTimeField, DecimalField, Field, FloatField, IntegerField, TimeField
+from rest_framework.fields import (
+    DateField,
+    DateTimeField,
+    DecimalField,
+    Field,
+    FloatField,
+    IntegerField,
+    TimeField,
+)
 from rest_framework.settings import api_settings as drf_settings
 
 from drf_excel.utilities import XLSXStyle, get_setting, sanitize_value, set_cell_style
@@ -77,11 +85,11 @@ class XLSXNumberField(XLSXField):
 
     def init_value(self, value):
         try:
-            if isinstance(self.drf_field, IntegerField) and type(value) != int:
+            if isinstance(self.drf_field, IntegerField) and type(value) is not int:
                 return int(value)
-            elif isinstance(self.drf_field, FloatField) and type(value) != float:
+            elif isinstance(self.drf_field, FloatField) and type(value) is not float:
                 return float(value)
-            elif isinstance(self.drf_field, DecimalField) and type(value) != Decimal:
+            elif isinstance(self.drf_field, DecimalField) and type(value) is not Decimal:
                 return Decimal(value)
         except:
             pass
@@ -120,11 +128,11 @@ class XLSXDateField(XLSXField):
     def init_value(self, value):
         # Set tzinfo to None on datetime and time types since timezones are not supported in Excel
         try:
-            if isinstance(self.drf_field, DateTimeField) and type(value) != datetime.datetime:
+            if isinstance(self.drf_field, DateTimeField) and type(value) is not datetime.datetime:
                 return self._parse_date(value, "DATETIME_FORMAT", parse_datetime).replace(tzinfo=None)
-            elif isinstance(self.drf_field, DateField) and type(value) != datetime.date:
+            elif isinstance(self.drf_field, DateField) and type(value) is not datetime.date:
                 return self._parse_date(value, "DATE_FORMAT", parse_date)
-            elif isinstance(self.drf_field, TimeField) and type(value) != datetime.time:
+            elif isinstance(self.drf_field, TimeField) and type(value) is not datetime.time:
                 return self._parse_date(value, "TIME_FORMAT", parse_time).replace(tzinfo=None)
         except:
             return value
