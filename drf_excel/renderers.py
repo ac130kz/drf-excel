@@ -76,7 +76,7 @@ class XLSXRenderer(BaseRenderer):
         # Make column headers
         all_column_titles = column_header.get("titles", [])
         if is_multitabbed:
-            querylist = self.get_querylist()
+            querylist = drf_view.get_querylist()
             for tab_results, tab_title, column_titles, query_data in zip_longest(
                 results,
                 tab_titles,
