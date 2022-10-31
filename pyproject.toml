@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "drf-excel"
-version = "2.2.1"
+version = "2.2.2"
 description = "Django REST Framework renderer for Excel spreadsheet (xlsx) files."
 authors = ["Timothy Allen <tallen@wharton.upenn.edu>"]
 readme = "README.md"
@@ -13,6 +13,7 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3 :: Only",
     "Framework :: Django",
     "Framework :: Django :: 3",

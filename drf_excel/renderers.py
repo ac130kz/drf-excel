@@ -1,5 +1,6 @@
 from collections.abc import Iterable, MutableMapping
 from itertools import zip_longest
+from re import A
 from typing import Dict
 
 import orjson as json
@@ -75,22 +76,25 @@ class XLSXRenderer(BaseRenderer):
 
         # Make column headers
         all_column_titles = column_header.get("titles", [])
-
         if is_multitabbed:
-            for tab_results, tab_title, column_titles in zip_longest(
+            querylist = self.get_querylist()
+            for tab_results, tab_title, column_titles, query_data in zip_longest(
                 results,
                 tab_titles,
                 all_column_titles,
+                querylist,
                 fillvalue=[],
             ):
                 self.ws: Worksheet = wb.create_sheet()
-                self._render_tab(tab_results, drf_view, column_header, column_titles, tab_title)
+                serializer = query_data["serializer_class"]
+                self._render_tab(tab_results, drf_view, column_header, column_titles, serializer, tab_title)
         else:
             self.ws: Worksheet = wb.active
-            self._render_tab(results, drf_view, column_header, all_column_titles, tab_titles[0])
+            serializer = drf_view.get_serializer()
+            self._render_tab(results, drf_view, column_header, all_column_titles, serializer, tab_titles[0])
         return save_virtual_workbook(wb)
 
-    def _render_tab(self, results, drf_view, column_header, column_titles, title="Report"):
+    def _render_tab(self, results, drf_view, column_header, column_titles, serializer, title="Report"):
         # Take header and column_header params from view
         header = get_attribute(drf_view, "header", {})
         use_header = header and header.get("use_header", True)
@@ -113,7 +117,9 @@ class XLSXRenderer(BaseRenderer):
         # If we have results, then flatten field
         # names
         if len(results):
-            self._flatten_fields(drf_view, column_header, column_header_style, column_count, row_count, column_titles)
+            self._flatten_fields(
+                drf_view, column_header, column_header_style, column_count, row_count, column_titles, serializer
+            )
 
         # Set the header row
         if use_header:
@@ -124,7 +130,9 @@ class XLSXRenderer(BaseRenderer):
 
         self._set_sheetview_options(drf_view)
 
-    def _flatten_fields(self, drf_view, column_header, column_header_style, column_count, row_count, column_titles):
+    def _flatten_fields(
+        self, drf_view, column_header, column_header_style, column_count, row_count, column_titles, serializer
+    ):
         # Set `xlsx_use_labels = True` inside the API View to enable labels.
         use_labels = getattr(drf_view, "xlsx_use_labels", False)
 
@@ -165,9 +173,8 @@ class XLSXRenderer(BaseRenderer):
         # 'custom_func', allowing for formatting logic
         self.custom_mappings = getattr(drf_view, "xlsx_custom_mappings", {})
 
-        self.fields_dict = self._serializer_fields(drf_view.get_serializer())
-
-        xlsx_header_dict = self._flatten_serializer_keys(drf_view.get_serializer(), use_labels=use_labels)
+        self.fields_dict = self._serializer_fields(serializer)
+        xlsx_header_dict = self._flatten_serializer_keys(serializer, use_labels=use_labels)
         if self.custom_cols:
             custom_header_dict = {
                 key: self.custom_cols[key].get("label", None) or key for key in self.custom_cols.keys()
