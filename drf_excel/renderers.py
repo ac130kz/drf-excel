@@ -1,6 +1,5 @@
 from collections.abc import Iterable, MutableMapping
 from itertools import zip_longest
-from re import A
 from typing import Dict
 
 import orjson as json
