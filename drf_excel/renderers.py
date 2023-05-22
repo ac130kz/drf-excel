@@ -1,5 +1,5 @@
 from collections.abc import Iterable, MutableMapping
-from itertools import zip_longest
+from tempfile import NamedTemporaryFile
 from typing import Dict
 
 import orjson as json
@@ -8,8 +8,7 @@ from openpyxl.drawing.image import Image
 from openpyxl.styles import PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.views import SheetView
-from openpyxl.worksheet.worksheet import Worksheet
-from openpyxl.writer.excel import save_virtual_workbook
+from openpyxl.writer.excel import save_workbook
 from rest_framework.fields import (
     BooleanField,
     DateField,
@@ -122,7 +121,8 @@ class XLSXRenderer(BaseRenderer):
 
         # Set the header row
         if use_header:
-            self._set_header(header, header_title, header_style, column_count)
+            last_col_letter = get_column_letter(column_count) if column_count else "G"
+            self.ws.merge_cells(f"A1:{last_col_letter}1")
 
         self._set_column_width(column_header, column_count)
         self._make_body_main(results, drf_view, row_count)
@@ -241,11 +241,21 @@ class XLSXRenderer(BaseRenderer):
         self.sheet_view_options = get_attribute(drf_view, "sheet_view_options", {})
         self.ws.views.sheetView[0] = SheetView(**self.sheet_view_options)
 
+        return self._save_virtual_workbook(wb)
+
+    def _save_virtual_workbook(self, wb):
+        tmp = NamedTemporaryFile()
+        save_workbook(wb, tmp.name)
+
+        tmp.seek(0)
+        virtual_workbook = tmp.read()
+        tmp.close()
+
+        return virtual_workbook
+
     def _check_validation_data(self, data):
         detail_key = "detail"
-        if detail_key in data:
-            return False
-        return True
+        return detail_key not in data
 
     def _serializer_fields(self, serializer, parent_key="", key_sep="."):
         _fields_dict = {}
@@ -272,11 +282,10 @@ class XLSXRenderer(BaseRenderer):
         """
 
         def _get_label(parent_label, label_sep, obj):
-            if getattr(obj, "label", None):
-                if parent_label:
-                    return f"{parent_label}{label_sep}{obj.label}"
-                return str(obj.label)
-            return False
+            if getattr(v, "label", None):
+                return f"{parent_label}{label_sep}{v.label}" if parent_label else str(v.label)
+            else:
+                return False
 
         _header_dict = {}
         _fields = serializer.get_fields()
@@ -367,6 +376,6 @@ class XLSXRenderer(BaseRenderer):
             return XLSXNumberField(**kwargs)
         elif isinstance(field, (DateTimeField, DateField, TimeField)):
             return XLSXDateField(**kwargs)
-        elif isinstance(field, (ListField, Iterable)) and not isinstance(value, str):
+        elif isinstance(field, ListField) or isinstance(value, Iterable) and not isinstance(value, str):
             return XLSXListField(list_sep=self.list_sep, **kwargs)
         return XLSXField(**kwargs)
